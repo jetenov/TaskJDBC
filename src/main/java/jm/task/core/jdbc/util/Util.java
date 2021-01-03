@@ -1,5 +1,8 @@
 package jm.task.core.jdbc.util;
-import java.sql.*;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class Util {
     private static final String url = "jdbc:mysql://localhost:3306/task";
@@ -7,7 +10,7 @@ public class Util {
     private static final String password = "Aventador10";
     private static final String driver = "com.mysql.jdbc.Driver";
 
-    public Connection getConnection() {
+    public static Connection getConnection() {
         Connection connection = null;
         try {
             Class.forName(driver);
