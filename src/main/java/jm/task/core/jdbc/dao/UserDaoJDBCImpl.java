@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoJDBCImpl implements UserDao {
+    private Connection connection = Util.getConnection();
 
     public UserDaoJDBCImpl() {
 
@@ -24,8 +25,8 @@ public class UserDaoJDBCImpl implements UserDao {
                 "   age int\n" +
                 ");";
 
-        try(Connection connection = Util.getConnection()){
-            PreparedStatement statement = connection.prepareStatement(sql);
+
+        try(PreparedStatement statement = connection.prepareStatement(sql)){
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -36,8 +37,7 @@ public class UserDaoJDBCImpl implements UserDao {
     public void dropUsersTable() {
         String sql = "drop table IF EXISTS users";
 
-        try(Connection connection = Util.getConnection()){
-            PreparedStatement statement = connection.prepareStatement(sql);
+        try(PreparedStatement statement = connection.prepareStatement(sql)){
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -48,10 +48,9 @@ public class UserDaoJDBCImpl implements UserDao {
     public void saveUser(String name, String lastName, byte age) {
         String sql = "insert into users (name, lastName, age)\n" +
                 "VALUES (?, ?, ?);";
-        Connection connection = Util.getConnection();
-        try{
+
+        try(PreparedStatement statement = connection.prepareStatement(sql)){
             connection.setAutoCommit(false);
-            PreparedStatement statement = connection.prepareStatement(sql);
             statement.setString(1, name);
             statement.setString(2, lastName);
             statement.setByte(3, age);
@@ -70,7 +69,6 @@ public class UserDaoJDBCImpl implements UserDao {
         } finally {
             try {
                 connection.setAutoCommit(true);
-                connection.close();
             } catch (SQLException e3) {
                 System.out.println("Exception in closing connection");
                 e3.printStackTrace();
@@ -81,11 +79,12 @@ public class UserDaoJDBCImpl implements UserDao {
     public void removeUserById(long id) {
         String sql = "delete from users\n" +
                 "where id = ?";
-        Connection connection = Util.getConnection();
-        try{
-            PreparedStatement statement = connection.prepareStatement(sql);
+
+        try(PreparedStatement statement = connection.prepareStatement(sql)){
+            connection.setAutoCommit(false);
             statement.setLong(1, id);
             statement.executeUpdate();
+            connection.commit();
         } catch (SQLException e1) {
             System.out.println("error removing user by id");
             e1.printStackTrace();
@@ -98,7 +97,6 @@ public class UserDaoJDBCImpl implements UserDao {
         } finally {
             try {
                 connection.setAutoCommit(true);
-                connection.close();
             } catch (SQLException e3) {
                 System.out.println("Exception in closing connection");
                 e3.printStackTrace();
@@ -110,26 +108,26 @@ public class UserDaoJDBCImpl implements UserDao {
         List<User> list = new ArrayList<>();
         String sql = "select * from users";
 
-        try(Connection connection = Util.getConnection()){
-            PreparedStatement statement = connection.prepareStatement(sql);
+        try(PreparedStatement statement = connection.prepareStatement(sql)){
             ResultSet set = statement.executeQuery();
             while (set.next()) {
                 User user = new User(set.getString("name"),set.getString("lastName"), set.getByte("age"));
                 list.add(user);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
             System.out.println("error getting all users");
+            e.printStackTrace();
         }
         return list;
     }
 
     public void cleanUsersTable() {
         String sql = "truncate table users";
-        Connection connection = Util.getConnection();
-        try{
-            PreparedStatement statement = connection.prepareStatement(sql);
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)){
+            connection.setAutoCommit(false);
             statement.executeUpdate();
+            connection.commit();
         } catch (Exception e1) {
             System.out.println("error cleaning table");
             e1.printStackTrace();
@@ -142,7 +140,6 @@ public class UserDaoJDBCImpl implements UserDao {
         } finally {
             try {
                 connection.setAutoCommit(true);
-                connection.close();
             } catch (SQLException e3) {
                 System.out.println("Exception in closing connection");
                 e3.printStackTrace();
